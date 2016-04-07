@@ -85,7 +85,7 @@ class FileDefinition(BaseDefinition):
                 target_file.write(self.contents)
 
         if exists:
-            new_lines = self.contents.split("\n")
+            new_lines = self.contents.splitlines(True)
             diff = difflib.context_diff(old_file, new_lines,
                                         fromfile="old {}".format(self.path),
                                         tofile="new ".format(self.path))
