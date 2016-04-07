@@ -86,7 +86,7 @@ class FileDefinition(BaseDefinition):
 
         if exists:
             new_lines = self.contents.splitlines(True)
-            diff = difflib.context_diff(old_file, new_lines,
+            diff = difflib.unified_diff(old_file, new_lines,
                                         fromfile="old {}".format(self.path),
                                         tofile="new ".format(self.path))
             return ExecutionResult(message="Updated file {}".format(self.path), diff=diff)
