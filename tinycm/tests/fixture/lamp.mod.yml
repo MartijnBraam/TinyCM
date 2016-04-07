@@ -1,0 +1,17 @@
+arguments:
+  webroot: /var/www
+---
+package:
+  name:
+    - apache2
+    - mysql-server
+    - mysql-client
+    - php5
+    - apache2-mod-pgp5
+  ensure: installed
+---
+file:
+  name: /etc/apache2/apache2.conf
+  contents: ""
+  type: constant
+  after: package::apache2

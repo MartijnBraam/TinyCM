@@ -1,0 +1,12 @@
+arguments:
+  distro: none
+---
+package:
+  name:
+    - zsh
+  ensure: installed
+---
+package:
+  name: git
+  ensure: installed
+  if: 'distro in ["oh-my-zsh", "prezto"]'

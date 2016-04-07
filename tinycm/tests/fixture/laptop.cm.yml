@@ -1,0 +1,12 @@
+global:
+  nameserver1: 1.2.3.4
+---
+import:
+  name: zsh
+  distro: prezto
+---
+package:
+  name:
+    - neovim
+    - htop
+  ensure: installed

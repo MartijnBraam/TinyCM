@@ -1,0 +1,18 @@
+hosts:
+  - filter: .+
+    constants:
+      nameserver1: 8.8.8.8
+      nameserver2: 8.8.4.4
+global:
+  nameserver1: 1.2.3.4
+---
+import:
+  name: lamp
+  webroot: /srv/http
+---
+file:
+  name: /etc/resolv.conf
+  contents: |
+    nameserver: {nameserver1}
+    nameserver: {nameserver2}
+  type: constant
