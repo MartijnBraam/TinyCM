@@ -1,4 +1,4 @@
-from tinycm import DefinitionConflictError
+from tinycm import DefinitionConflictError, InvalidParameterError
 from tinycm.basedefinition import BaseDefinition
 from tinycm.reporting import VerifyResult
 import os
@@ -18,10 +18,14 @@ class FileDefinition(BaseDefinition):
         # Optional parameters
         self.interpolate = False
         self.encoding = "utf-8"
+        self.ensure = 'contents'
+
         if 'interpolate' in parameters:
             self.interpolate = parameters['interpolate']
         if 'encoding' in parameters:
             self.encoding = parameters['encoding']
+        if 'ensure' in parameters:
+            self.ensure = parameters['ensure']
 
         # Internal parameters
         self._fetched_and_interpolated = False
@@ -48,6 +52,12 @@ class FileDefinition(BaseDefinition):
             self.contents = self.contents.format(**self.context)
 
         self._fetched_and_interpolated = True
+
+    def lint(self):
+        if self.type not in ['constant', 'http']:
+            raise InvalidParameterError('Type not in [constant, http]')
+        if self.ensure not in ['deleted', 'exists', 'contents']:
+            raise InvalidParameterError('Ensure not in [deleted, exists, contents]')
 
     def verify(self):
         self._ensure_contents()

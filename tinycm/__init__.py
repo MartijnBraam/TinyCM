@@ -4,3 +4,7 @@ class DefinitionConflictError(Exception):
 
 class UndefinedTypeError(Exception):
     pass
+
+
+class InvalidParameterError(Exception):
+    pass

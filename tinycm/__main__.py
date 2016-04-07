@@ -40,6 +40,9 @@ if __name__ == '__main__':
 
     logging.debug('Starting parse stage')
     configuration = CMParser(args.configuration, args.hostname, module_path=args.modulepath)
+    logging.debug('Starting lint stage')
+    for definition in configuration.definitions:
+        configuration.definitions[definition].lint()
     logging.debug('Starting graph stage')
     graph = CMGraph(configuration)
     logging.debug('Starting sort stage')

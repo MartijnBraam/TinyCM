@@ -1,4 +1,4 @@
-from tinycm import DefinitionConflictError
+from tinycm import DefinitionConflictError, InvalidParameterError
 from tinycm.basedefinition import BaseDefinition
 import subprocess
 import distro
@@ -78,6 +78,10 @@ class PackageDefinition(BaseDefinition):
             return True
         except subprocess.CalledProcessError:
             return False
+
+    def lint(self):
+        if self.ensure not in ['installed', 'removed']:
+            raise InvalidParameterError('Ensure not in [installed, removed]')
 
     def verify(self):
         should_be_installed = self.ensure == 'installed'
