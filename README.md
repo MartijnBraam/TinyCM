@@ -64,6 +64,8 @@ This makes it easy to run TinyCM standalone or with a task runner like ansible.
 
 ## Starting a job
 
+TinyCM doesn't run as a daemon. You can start it manually or run it automatically through cron.
+
 The only required parameter for running TinyCM is a path to a local or remote manifest file:
 
 ```bash
