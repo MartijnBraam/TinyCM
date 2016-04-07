@@ -71,7 +71,7 @@ $ tinycm http://some.server.somewhere.com/manifests/cool-name.cm.yml
 ```
 
 This will download the manifest and verify it (no changes to the server). If any module is specified it will be loaded from
-`http://some.server.somewhere.com/manifests/{module-name}.mod.yml
+`http://some.server.somewhere.com/manifests/{module-name}.mod.yml`
 
 To actually make changes to your server you need to add the `--apply` flag:
 
