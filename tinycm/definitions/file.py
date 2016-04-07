@@ -1,8 +1,9 @@
-from tinycm import DefinitionConflictError, InvalidParameterError
+from tinycm import DefinitionConflictError, InvalidParameterError, ExecutionResult
 from tinycm.basedefinition import BaseDefinition
 from tinycm.reporting import VerifyResult
 import os
 import requests
+import difflib
 
 
 class FileDefinition(BaseDefinition):
@@ -74,6 +75,20 @@ class FileDefinition(BaseDefinition):
     def execute(self):
         self._ensure_contents()
         verify_result = self.verify()
+        exists = os.path.isfile(self.path)
+        if exists:
+            with open(self.path, 'r') as input_file:
+                old_file = input_file.readlines()
+
         if not verify_result.success:
             with open(self.path, 'w') as target_file:
                 target_file.write(self.contents)
+
+        if exists:
+            new_lines = self.contents.split("\n")
+            diff = difflib.context_diff(old_file, new_lines,
+                                        fromfile="old {}".format(self.path),
+                                        tofile="new ".format(self.path))
+            return ExecutionResult(message="Updated file {}".format(self.path), diff=diff)
+        else:
+            return ExecutionResult(message="Created file {}".format(self.path), diff=self.contents.split("\n"))

@@ -1,4 +1,4 @@
-from tinycm import DefinitionConflictError, InvalidParameterError
+from tinycm import DefinitionConflictError, InvalidParameterError, ExecutionResult
 from tinycm.basedefinition import BaseDefinition
 import subprocess
 import distro
@@ -102,5 +102,8 @@ class PackageDefinition(BaseDefinition):
         if not verify_result.success:
             if self.ensure == 'installed':
                 self._pm_install()
+                return ExecutionResult("Installed package {}".format(self.package))
             else:
                 self._pm_remove()
+                return ExecutionResult("Removed package {}".format(self.package))
+        return None

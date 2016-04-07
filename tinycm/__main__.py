@@ -1,3 +1,4 @@
+from tinycm.executer import execute
 from tinycm.parser import CMParser
 from tinycm.graph import CMGraph
 from socket import getfqdn
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     tasks = graph.get_sorted_jobs()
 
     if args.apply:
-        raise NotImplementedError()
+        result = execute(tasks)
     else:
         result = verify(tasks)
         print(get_verify_report(result))
