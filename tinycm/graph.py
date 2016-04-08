@@ -1,4 +1,5 @@
 import networkx as nx
+from tinycm import InvalidParameterError
 
 
 class CMGraph(object):
@@ -14,7 +15,11 @@ class CMGraph(object):
             if len(configuration.definitions[identifier].after) > 0:
                 for edge in configuration.definitions[identifier].after:
                     edge_from = configuration.definitions[identifier]
-                    edge_to = configuration.definitions[edge]
+                    if edge in configuration.definitions:
+                        edge_to = configuration.definitions[edge]
+                    else:
+                        raise InvalidParameterError(
+                            'Definition {} does not exist (referenced in {}->after)'.format(edge, identifier))
                     self.graph.add_edge(edge_from, edge_to)
 
     def get_sorted_jobs(self):

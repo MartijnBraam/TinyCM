@@ -3,7 +3,9 @@ class DefinitionConflictError(Exception):
 
 
 class UndefinedTypeError(Exception):
-    pass
+    def __init__(self, missing_type, *args, **kwargs):
+        self.missing_type = missing_type
+        super().__init__(*args, **kwargs)
 
 
 class InvalidParameterError(Exception):

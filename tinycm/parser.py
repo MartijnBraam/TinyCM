@@ -10,9 +10,14 @@ import boolexp
 from tinycm import UndefinedTypeError
 from tinycm.utils import http_join
 
+logger = logging.getLogger('parser')
+
 
 class CMParser(object):
     def __init__(self, input_file, hostname, name=None, module_path=None, tempdir=None, arguments=None):
+        global logger
+        logger = logging.getLogger('tinycm')
+
         if not tempdir:
             self.tempdir = tempfile.mkdtemp(prefix='tinycm-')
         if not name:
@@ -22,7 +27,7 @@ class CMParser(object):
         self.source_type = 'file'
         self.module_path = module_path
         if input_file.startswith('http://') or input_file.startswith('https://'):
-            logging.info('Downloading {}'.format(input_file))
+            logger.info('Downloading {}'.format(input_file))
             response = requests.get(input_file)
             filename = os.path.join(self.tempdir, self.name)
             with open(filename, 'wb') as target_file:
@@ -30,11 +35,11 @@ class CMParser(object):
 
             self.filename = filename
             self.source_type = 'http'
-            logging.debug('Download complete')
+            logger.debug('Download complete')
         else:
-            logging.info('Processing {}'.format(input_file))
+            logger.info('Processing {}'.format(input_file))
             self.filename = input_file
-        logging.debug('Actual input file: {}'.format(self.filename))
+        logger.debug('Actual input file: {}'.format(self.filename))
         self.hostname = hostname
         self.hosts = {}
         self.constants = {}
@@ -51,22 +56,22 @@ class CMParser(object):
 
         if 'arguments' in frontmatter:
             # This is a module
-            logging.info('Input file is a module')
+            logger.info('Input file is a module')
             constants = frontmatter['arguments']
             constants.update(self.constants)
             self.constants = constants
         else:
             # This is a configuration definition
-            logging.info('Input file is a configuration file')
+            logger.info('Input file is a configuration file')
             if 'global' in frontmatter:
-                logging.debug('Global constants imported')
+                logger.debug('Global constants imported')
                 self.constants = frontmatter['global']
 
             if 'hosts' in frontmatter:
                 for host in frontmatter['hosts']:
-                    logging.debug('Matching hostname "{}" on regex {}'.format(self.hostname, host['filter']))
+                    logger.debug('Matching hostname "{}" on regex {}'.format(self.hostname, host['filter']))
                     if re.match(host['filter'], self.hostname):
-                        logging.info('Host filter {} matched'.format(host['filter']))
+                        logger.info('Host filter {} matched'.format(host['filter']))
                         self.constants.update(host['constants'])
 
         for definition in self.raw:
@@ -88,17 +93,17 @@ class CMParser(object):
             self._insert_definition(definition_type, definition['name'], definition)
 
     def _process_definition_if(self, definition):
-        logging.info('Evalueating expression {}'.format(definition['if']))
+        logger.info('Evalueating expression {}'.format(definition['if']))
         for key in self.constants:
-            logging.debug('  {} = {}'.format(key, repr(self.constants[key])))
+            logger.debug('  {} = {}'.format(key, repr(self.constants[key])))
         expr = boolexp.Expression(definition['if'])
         result = expr.evaluate(self.constants)
-        logging.debug('Expression evaluated to: {}'.format(result))
+        logger.debug('Expression evaluated to: {}'.format(result))
         return result
 
     def _insert_definition(self, type, name, parameters):
         if type == 'import':
-            logging.info('Parsing import definition')
+            logger.info('Parsing import definition')
             import_name = self._get_import_name(name)
             import_parsed = CMParser(import_name, self.hostname, name, self.module_path, self.tempdir, parameters)
             for identifier in import_parsed.definitions:
@@ -110,7 +115,7 @@ class CMParser(object):
             return
         identifier = '{}::{}'.format(type, name)
         module_name = 'tinycm.definitions.{}'.format(type)
-        logging.debug('Checking for module existence: {}'.format(module_name))
+        logger.debug('Checking for module existence: {}'.format(module_name))
 
         try:
             module = importlib.import_module(module_name)
@@ -119,7 +124,7 @@ class CMParser(object):
                 module_name = 'tinycm_{}'.format(type)
                 module = importlib.import_module(module_name)
             except ImportError:
-                raise UndefinedTypeError("Type not found: {}".format(type))
+                raise UndefinedTypeError(type, "Type not found: {}".format(type))
 
         class_name = '{}Definition'.format(type.title())
         class_ = getattr(module, class_name)
@@ -131,7 +136,7 @@ class CMParser(object):
             else:
                 after = [parameters['after']]
 
-        logging.debug('Creating instance of {}'.format(class_name))
+        logger.debug('Creating instance of {}'.format(class_name))
         instance = class_(identifier, parameters, self.source, after, self.constants)
 
         if hasattr(instance, 'dependencies'):
@@ -140,7 +145,7 @@ class CMParser(object):
                 self._insert_definition(dep.type, dep.name, dep.parameters)
 
         if identifier in self.definitions:
-            logging.info('Duplicate definition found ({}), trying merge'.format(identifier))
+            logger.info('Duplicate definition found ({}), trying merge'.format(identifier))
             self.definitions[identifier] = self.definitions[identifier].try_merge(instance)
         else:
             self.definitions[identifier] = instance

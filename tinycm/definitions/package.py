@@ -5,6 +5,8 @@ import distro
 from tinycm.reporting import VerifyResult
 import logging
 
+logger = None
+
 
 class PackageDefinition(BaseDefinition):
     def __init__(self, identifier, parameters, source, after, context):
@@ -17,6 +19,9 @@ class PackageDefinition(BaseDefinition):
         if 'packagemanager' in parameters:
             self.packagemanager = parameters['packagemanager']
         super().__init__(identifier)
+
+        global logger
+        logger = logging.getLogger('tinycm')
 
     def try_merge(self, other):
         if self.ensure != other.ensure:
@@ -57,7 +62,7 @@ class PackageDefinition(BaseDefinition):
         else:
             raise NotImplementedError()
         command = command_template.format(self.package)
-        logging.info("Executing: {}".format(command))
+        logger.info("Executing: {}".format(command))
         subprocess.check_call(command, shell=True, stderr=subprocess.STDOUT)
 
     def _pm_remove(self):
@@ -72,7 +77,7 @@ class PackageDefinition(BaseDefinition):
             raise NotImplementedError()
 
         command = command_template.format(self.package)
-        logging.info("Executing: {}".format(command))
+        logger.info("Executing: {}".format(command))
         subprocess.check_call(command, shell=True, stderr=subprocess.STDOUT)
 
     def lint(self):
