@@ -7,6 +7,7 @@ import spwd
 import crypt
 from hmac import compare_digest as compare_hash
 from tinycm.reporting import VerifyResult
+import subprocess
 
 
 class UserDefinition(BaseDefinition):
@@ -32,6 +33,7 @@ class UserDefinition(BaseDefinition):
         self.homedir = parameters['homedir'] if 'homedir' in parameters else None
         self.shell = parameters['shell'] if 'shell' in parameters else "/bin/false"
         self.extra_groups = parameters['groups'] if 'groups' in parameters else None
+        self.manage_home = parameters['manage-home'] if 'manage-home' in parameters else False
 
     def try_merge(self, other):
 
@@ -166,4 +168,42 @@ class UserDefinition(BaseDefinition):
         return VerifyResult(self.identifier, success=True)
 
     def execute(self):
-        raise NotImplementedError()
+        vresult = self.verify()
+        if not vresult.success:
+            should_exist = self.ensure == 'exists'
+            try:
+                pwd.getpwnam(self.name)
+                exists = True
+            except KeyError:
+                exists = False
+
+            if not should_exist and exists:
+                if self.manage_home:
+                    subprocess.check_call(['userdel', '-r', self.name])
+                else:
+                    subprocess.check_call(['userdel', self.name])
+                return ExecutionResult('Removed user {}'.format(self.name))
+
+            if should_exist and not exists:
+                command = ['useradd', '--shell', self.shell]
+                if self.gid:
+                    command.extend(['--gid', str(self.gid)])
+                if self.extra_groups:
+                    command.extend(['--groups', ','.join(self.extra_groups)])
+                if self.uid:
+                    command.extend(['--uid', str(self.uid)])
+                if self.homedir:
+                    command.extend(['--home', self.homedir])
+                if self.comment:
+                    command.extend(['--comment', self.comment])
+                if self.password_hash:
+                    command.extend(['--password', self.password_hash])
+                    # TODO: Implement password hashing
+                if self.manage_home:
+                    command.append('--create-home')
+
+                subprocess.check_call(command)
+
+            if should_exist and exists:
+                # TODO: Implement updating user
+                pass
