@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
         name='tinycm',
-        version='0.1.2',
+        version='0.1.3',
         packages=['tinycm', 'tinycm.definitions'],
         url='https://github.com/MartijnBraam/TinyCM',
         license='MIT',
