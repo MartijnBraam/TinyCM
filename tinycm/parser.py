@@ -9,6 +9,7 @@ import logging
 import boolexp
 
 from tinycm import UndefinedTypeError
+from tinycm.utils import http_join
 
 
 class CMParser(object):
@@ -147,9 +148,6 @@ class CMParser(object):
 
     def _get_import_name(self, name):
         if self.module_path.startswith('http://') or self.module_path.startswith('https://'):
-            parts = urllib.parse.urlparse(self.module_path)
-            path = os.path.join(parts.path, '{}.mod.yml'.format(name))
-            parts.path = path
-            return urllib.parse.urlunparse(parts)
+            return http_join(self.module_path, '{}.mod.yml'.format(name))
         else:
             return os.path.join(self.module_path, '{}.mod.yml'.format(name))

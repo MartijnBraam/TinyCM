@@ -2,12 +2,12 @@ from tinycm.executer import execute
 from tinycm.parser import CMParser
 from tinycm.graph import CMGraph
 from socket import getfqdn
-import urllib.parse
 import os
 import logging
 import argparse
 
 from tinycm.reporting import verify, get_verify_report
+from tinycm.utils import http_dirname
 
 
 def main():
@@ -27,10 +27,7 @@ def main():
 
     if not args.modulepath:
         if args.configuration.startswith('http://') or args.configuration.startswith('https://'):
-            parts = urllib.parse.urlparse(args.configuration)
-            path = os.path.dirname(parts.path)
-            parts.path = path
-            args.modulepath = urllib.parse.urlunparse(parts)
+            args.modulepath = http_dirname(args.configuration)
         else:
             args.modulepath = os.path.dirname(args.configuration)
 
