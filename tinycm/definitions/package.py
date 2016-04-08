@@ -48,7 +48,7 @@ class PackageDefinition(BaseDefinition):
     def _pm_install(self):
         if self.packagemanager == 'autodetect':
             current_distro = distro.identify()
-            command_template = current_distro.command['package']['is-installed']
+            command_template = current_distro.command['package']['install']
         elif self.packagemanager == 'apt':
             command_template = 'apt-get -y install --no-install-recommends {}'
         elif self.packagemanager == 'pacman':
@@ -56,16 +56,12 @@ class PackageDefinition(BaseDefinition):
         else:
             raise NotImplementedError()
 
-        try:
-            subprocess.check_output(command_template.format(self.package), shell=True, stderr=subprocess.DEVNULL)
-            return True
-        except subprocess.CalledProcessError:
-            return False
+        subprocess.check_output(command_template.format(self.package), shell=True, stderr=subprocess.DEVNULL)
 
     def _pm_remove(self):
         if self.packagemanager == 'autodetect':
             current_distro = distro.identify()
-            command_template = current_distro.command['package']['is-installed']
+            command_template = current_distro.command['package']['purge']
         elif self.packagemanager == 'apt':
             command_template = 'apt-get -y remove {}'
         elif self.packagemanager == 'pacman':
@@ -73,11 +69,7 @@ class PackageDefinition(BaseDefinition):
         else:
             raise NotImplementedError()
 
-        try:
-            subprocess.check_output(command_template.format(self.package), shell=True, stderr=subprocess.DEVNULL)
-            return True
-        except subprocess.CalledProcessError:
-            return False
+        subprocess.check_output(command_template.format(self.package), shell=True, stderr=subprocess.DEVNULL)
 
     def lint(self):
         if self.ensure not in ['installed', 'removed']:
