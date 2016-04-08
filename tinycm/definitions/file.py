@@ -92,21 +92,39 @@ class FileDefinition(BaseDefinition):
             raise InvalidParameterError('Ensure not in [deleted, exists, contents]')
 
     def verify(self):
+        should_exist = self.ensure == 'contents' or self.ensure == 'exists'
+        should_match = self.ensure == 'contents'
+        exists = os.path.isfile(self.path)
+
+        if not should_exist:
+            if exists:
+                return VerifyResult(self.identifier, success=False, message="File {} shouldn't exist".format(self.path))
+            else:
+                return VerifyResult(self.identifier, success=True)
+
         self._ensure_contents()
-        if not os.path.isfile(self.path):
+
+        if not exists:
             return VerifyResult(self.identifier, success=False, message="File {} does not exist".format(self.path))
-        if self.type == 'constant':
+
+        if should_match:
             with open(self.path) as input_file:
                 contents = input_file.read()
             if contents != self.contents:
                 return VerifyResult(self.identifier, success=False,
                                     message="File contents incorrect for {}".format(self.path))
-        if self.permission_mask:
-            file_info = os.stat(self.path)
-            file_uid = file_info[stat.ST_UID]
-            file_gid = file_info[stat.ST_GID]
-            file_mask = str(oct(file_info[stat.ST_MODE]))[-3:]
 
+        file_info = os.stat(self.path)
+        file_uid = file_info[stat.ST_UID]
+        file_gid = file_info[stat.ST_GID]
+        file_mask = str(oct(file_info[stat.ST_MODE]))[-3:]
+        if self.permission_mask:
+            merged = self._merge_permission_mask(file_mask, str(self.permission_mask))
+            if merged != file_mask:
+                return VerifyResult(self.identifier, success=False,
+                                    message="Incorrect mode for file {}".format(self.path))
+
+        if self.owner:
             if isinstance(self.owner, int):
                 if self.owner != file_uid:
                     return VerifyResult(self.identifier, success=False,
@@ -117,6 +135,7 @@ class FileDefinition(BaseDefinition):
                     return VerifyResult(self.identifier, success=False,
                                         message="Incorrect owner for file {}".format(self.path))
 
+        if self.group:
             if isinstance(self.group, int):
                 if self.group != file_gid:
                     return VerifyResult(self.identifier, success=False,
@@ -127,22 +146,26 @@ class FileDefinition(BaseDefinition):
                     return VerifyResult(self.identifier, success=False,
                                         message="Incorrect group for file {}".format(self.path))
 
-            mask_part = file_mask.split()
-            mask_part_want = self.permission_mask.split()
-            for i in range(0, 3):
-                if mask_part_want[i] != 'x' and mask_part_want[i] != mask_part[i]:
-                    return VerifyResult(self.identifier, success=False,
-                                        message="Incorrect mode for file {}".format(self.path))
-
         return VerifyResult(self.identifier, success=True)
 
     def execute(self):
-        self._ensure_contents()
-        verify_result = self.verify()
+        should_exist = self.ensure == 'contents' or self.ensure == 'exists'
         exists = os.path.isfile(self.path)
+
+        if not should_exist:
+            if exists:
+                os.remove(self.path)
+                return ExecutionResult("Removed {}".format(self.path))
+            else:
+                return
+
+        # Store original file for diff later
         if exists:
             with open(self.path, 'r') as input_file:
                 old_file = input_file.readlines()
+
+        self._ensure_contents()
+        verify_result = self.verify()
 
         if not verify_result.success:
             with open(self.path, 'w') as target_file:
