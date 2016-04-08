@@ -1,5 +1,7 @@
 global:
   nameserver1: 1.2.3.4
+plugins:
+  - vim
 ---
 import:
   name: zsh

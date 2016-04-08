@@ -8,6 +8,7 @@ import logging
 import boolexp
 
 from tinycm import UndefinedTypeError
+from tinycm.plugin import install_plugin
 from tinycm.utils import http_join
 
 logger = logging.getLogger('parser')
@@ -54,6 +55,10 @@ class CMParser(object):
         self.raw = ruamel.yaml.safe_load_all(open(self.filename))
         frontmatter = self.raw.__next__()
 
+        if 'plugins' in frontmatter:
+            for plugin in frontmatter['plugins']:
+                self._check_plugin(plugin)
+
         if 'arguments' in frontmatter:
             # This is a module
             logger.info('Input file is a module')
@@ -76,6 +81,16 @@ class CMParser(object):
 
         for definition in self.raw:
             self._load_definition(definition)
+
+    def _check_plugin(self, plugin):
+        try:
+            importlib.import_module("tinycm_{}".format(plugin))
+            exists = True
+        except ImportError:
+            exists = False
+
+        if not exists:
+            install_plugin(plugin)
 
     def _load_definition(self, definition):
         definition_type = list(definition.keys())[0]
