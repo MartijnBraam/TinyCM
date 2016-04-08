@@ -4,7 +4,6 @@ import tempfile
 import os
 import re
 import importlib
-import urllib.parse
 import logging
 import boolexp
 
@@ -27,7 +26,7 @@ class CMParser(object):
             response = requests.get(input_file)
             filename = os.path.join(self.tempdir, self.name)
             with open(filename, 'wb') as target_file:
-                target_file.write(response.content())
+                target_file.write(response.content)
 
             self.filename = filename
             self.source_type = 'http'
