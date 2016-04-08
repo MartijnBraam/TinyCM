@@ -9,6 +9,8 @@ software since most programming languages have a YAML reading/writing library.
    :maxdepth: 1
 
    definition/file
+   definition/package
+   definition/user
 
 Manifests and modules
 ---------------------

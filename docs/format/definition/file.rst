@@ -15,7 +15,7 @@ File definition
         owner: <string>|<int>           # Name or uid of file owner
         group: <string>|<int>           # Name or gid of file group
         permission-mask: <string>       # The chmod permissions
-        after: <string>|<array>
+        after: <string>|<list>
 
 ensure
 ------
@@ -96,7 +96,7 @@ http and template
 
     The contents of ``template.conf`` are
 
-    .. highlight:: jinja2
+    .. highlight:: jinja
 
     ::
 
