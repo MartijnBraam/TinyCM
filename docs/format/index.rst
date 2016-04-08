@@ -5,13 +5,6 @@ All manifests and modules area YAML 1.2 files with multiple documents. This make
 supported in most IDEs and text editors. It is also way easier to generate configuration manifests from your own
 software since most programming languages have a YAML reading/writing library.
 
-.. toctree::
-   :maxdepth: 1
-
-   definition/file
-   definition/package
-   definition/user
-
 Manifests and modules
 ---------------------
 
@@ -72,4 +65,31 @@ identifier for the definition. For example: ``package::htop`` or ``file::/etc/re
             nameserver {nameservers[0]}
             nameserver {nameservers[1]}
 
-Read the subpages for more information about the definitions
+
+The ``name`` parameter for the definition is a special case. If you specify a list instaed of a string then the
+definition will be copied for every item in the list. This is very useful for definitiosn with the same parameters like
+package install definitions.
+
+Definitions that are duplicated this way are still addressable with their own seperate identifiers.
+
+Plugins
+-------
+
+TinyCM only supports a tiny amount of definitions in it's core. The more powerful features come from plugins.
+Plugins are bundled as seperate python packages with the name ``tinycm_<modulename>``.
+
+If you put a list of module names in a hash in the header then TinyCM will use pip to install the module before executing
+the manifest::
+
+    # No constants in this example
+    global: {}
+
+    # Install tinycm_vim and tinycm_apache
+    plugins:
+        - vim
+        - apache
+    ---
+    # Use the plugin as definition
+    vim:
+        name: username
+        something: valu

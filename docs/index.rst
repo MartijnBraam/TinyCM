@@ -14,6 +14,7 @@ Contents:
    quickstart
    usage/index
    format/index
+   definition/index
    developing/index
 
 
