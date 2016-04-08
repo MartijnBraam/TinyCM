@@ -31,7 +31,7 @@ class UserDefinition(BaseDefinition):
         self.comment = parameters['comment'] if 'comment' in parameters else None
         self.homedir = parameters['homedir'] if 'homedir' in parameters else None
         self.shell = parameters['shell'] if 'shell' in parameters else "/bin/false"
-        self.extra_groups = parameters['groups'] if 'groups' in parameters else []
+        self.extra_groups = parameters['groups'] if 'groups' in parameters else None
 
     def try_merge(self, other):
 
@@ -82,7 +82,12 @@ class UserDefinition(BaseDefinition):
             raise DefinitionConflictError("Both password and password-hash defined after merge")
 
         # Merge lists
-        self.extra_groups = list(set(self.extra_groups) | set(other.extra_groups))
+        if self.extra_groups or other.extra_groups:
+            if not self.extra_groups:
+                self.extra_groups = []
+            if not other.extra_groups:
+                other.extra_groups = []
+            self.extra_groups = list(set(self.extra_groups) | set(other.extra_groups))
         self.after = list(set(self.after) | set(other.after))
 
         return self
@@ -144,19 +149,20 @@ class UserDefinition(BaseDefinition):
                 if compare_hash(crypt.crypt(self.password, pwhash), pwhash):
                     return VerifyResult(self.identifier, success=False, message="Password doesn't match with hash")
 
-            groups = set([g.gr_name for g in grp.getgrall() if self.name in g.gr_mem])
-            wanted_groups = set(self.extra_groups)
+            if self.extra_groups:
+                groups = set([g.gr_name for g in grp.getgrall() if self.name in g.gr_mem])
+                wanted_groups = set(self.extra_groups)
 
-            missing = wanted_groups - groups
-            invalid = groups - wanted_groups
+                missing = wanted_groups - groups
+                invalid = groups - wanted_groups
 
-            if len(missing) > 0:
-                return VerifyResult(self.identifier, success=False,
-                                    message="Missing groups: {}".format(', '.join(missing)))
+                if len(missing) > 0:
+                    return VerifyResult(self.identifier, success=False,
+                                        message="Missing groups: {}".format(', '.join(missing)))
 
-            if len(invalid) > 0:
-                return VerifyResult(self.identifier, success=False,
-                                    message="Invalid groups: {}".format(', '.join(invalid)))
+                if len(invalid) > 0:
+                    return VerifyResult(self.identifier, success=False,
+                                        message="Invalid groups: {}".format(', '.join(invalid)))
         return VerifyResult(self.identifier, success=True)
 
     def execute(self):
