@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 
 from setuptools import setup
-from pip.req import parse_requirements
-
-install_reqs = parse_requirements('tinycm/requirements.txt', session=False)
-reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
         name='tinycm',
-        version='0.1.1',
+        version='0.1.2',
         packages=['tinycm', 'tinycm.definitions'],
         url='https://github.com/MartijnBraam/TinyCM',
         license='MIT',
@@ -28,5 +24,13 @@ setup(
                 'tinycm = tinycm.__main__:main'
             ]
         },
-        install_requires=reqs
+        install_requires=[
+            'distro',
+            'networkx',
+            'requests',
+            'ruamel.yaml',
+            'tabulate',
+            'boolexp',
+            'pyparsing'
+        ]
 )
