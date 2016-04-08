@@ -166,7 +166,7 @@ class FileDefinition(BaseDefinition):
             if isinstance(self.owner, int):
                 uid = self.owner
             else:
-                uid = pwd.getpwnam().pw_uid
+                uid = pwd.getpwnam(self.owner).pw_uid
 
         if self.group:
             if isinstance(self.group, int):
@@ -181,14 +181,12 @@ class FileDefinition(BaseDefinition):
         os.chmod(self.path, self._oct_to_dec(int(mask)))
 
     def _merge_permission_mask(self, mask1, mask2):
-        mask1_part = mask1.split()
-        mask2_part = mask2.split()
-
+        mask1 = list(mask1)
         for i in range(0, 3):
-            if mask2_part[i] != 'x':
-                mask1_part[i] = mask2_part[i]
+            if mask2[i] != 'x':
+                mask1[i] = mask2[i]
 
-        return ''.join(mask1_part)
+        return ''.join(mask1)
 
     def _get_file_perms(self):
         file_info = os.stat(self.path)
