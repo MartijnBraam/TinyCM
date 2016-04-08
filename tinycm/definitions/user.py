@@ -42,7 +42,7 @@ class UserDefinition(BaseDefinition):
         if self.comment and other.comment and self.comment != other.comment:
             raise DefinitionConflictError('Duplicate definition for {} with different comment'.format(self.identifier))
 
-        if self.shell != "false" and other.shell != "false" and self.shell != other.shell:
+        if self.shell != "/bin/false" and other.shell != "/bin/false" and self.shell != other.shell:
             raise DefinitionConflictError('Duplicate definition for {} with different shell'.format(self.identifier))
 
         if self.uid and other.uid and self.uid != other.uid:

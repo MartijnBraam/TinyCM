@@ -15,3 +15,13 @@ class ExecutionResult(object):
         self.message = message
         self.diff = diff
         self.success = success
+
+
+class Dependency(object):
+    def __init__(self, type, name, parameters):
+        self.type = type
+        self.name = name
+
+        parameters['name'] = name
+
+        self.parameters = parameters

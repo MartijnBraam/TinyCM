@@ -115,7 +115,11 @@ class CMParser(object):
         try:
             module = importlib.import_module(module_name)
         except ImportError:
-            raise UndefinedTypeError("Type not found: {}".format(type))
+            try:
+                module_name = 'tinycm_{}'.format(type)
+                module = importlib.import_module(module_name)
+            except ImportError:
+                raise UndefinedTypeError("Type not found: {}".format(type))
 
         class_name = '{}Definition'.format(type.title())
         class_ = getattr(module, class_name)
@@ -129,6 +133,11 @@ class CMParser(object):
 
         logging.debug('Creating instance of {}'.format(class_name))
         instance = class_(identifier, parameters, self.source, after, self.constants)
+
+        if hasattr(instance, 'dependencies'):
+            deps = instance.dependencies()
+            for dep in deps:
+                self._insert_definition(dep.type, dep.name, dep.parameters)
 
         if identifier in self.definitions:
             logging.info('Duplicate definition found ({}), trying merge'.format(identifier))
