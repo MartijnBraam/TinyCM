@@ -1,4 +1,4 @@
-from tinycm import Dependency
+from tinycm import Dependency, ExecutionResult
 from tinycm.basedefinition import BaseDefinition
 from tinycm.reporting import VerifyResult
 
@@ -64,8 +64,8 @@ class VimDefinition(BaseDefinition):
     def verify(self):
         return VerifyResult(self.identifier, success=True)
 
-    def exec(self):
-        pass
+    def execute(self):
+        return ExecutionResult('Vim installed')
 
     def _get_config_path(self):
         if self.is_global:

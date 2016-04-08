@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
         name='tinycm_vim',
-        version='0.1.1',
+        version='0.1.2',
         packages=['tinycm_vim'],
         url='https://github.com/MartijnBraam/TinyCM',
         license='MIT',
