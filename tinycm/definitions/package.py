@@ -3,6 +3,7 @@ from tinycm.basedefinition import BaseDefinition
 import subprocess
 import distro
 from tinycm.reporting import VerifyResult
+import logging
 
 
 class PackageDefinition(BaseDefinition):
@@ -55,8 +56,9 @@ class PackageDefinition(BaseDefinition):
             command_template = 'pacman -S --noconfirm {}'
         else:
             raise NotImplementedError()
-
-        subprocess.check_output(command_template.format(self.package), shell=True, stderr=subprocess.DEVNULL)
+        command = command_template.format(self.package)
+        logging.info("Executing: {}".format(command))
+        subprocess.check_call(command, shell=True, stderr=subprocess.STDOUT)
 
     def _pm_remove(self):
         if self.packagemanager == 'autodetect':
@@ -69,7 +71,9 @@ class PackageDefinition(BaseDefinition):
         else:
             raise NotImplementedError()
 
-        subprocess.check_output(command_template.format(self.package), shell=True, stderr=subprocess.DEVNULL)
+        command = command_template.format(self.package)
+        logging.info("Executing: {}".format(command))
+        subprocess.check_call(command, shell=True, stderr=subprocess.STDOUT)
 
     def lint(self):
         if self.ensure not in ['installed', 'removed']:
