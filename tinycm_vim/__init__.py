@@ -26,14 +26,18 @@ class VimDefinition(BaseDefinition):
         self.interpolate = parameters['interpolate'] if 'interpolate' in parameters else False
 
         # Add dependencies
-        self.after.append('package::vim')
+        self.after.append('file::{}'.format(self._get_config_path()))
         if not self.is_global:
             self.after.append('user::{}'.format(self.name))
 
     def dependencies(self):
         user = self.name
+        after = ['user::{}'.format(self.name)]
         if self.is_global:
             user = 'root'
+            after = []
+
+        after.append('package::vim')
 
         dependencies = [
             Dependency('package', 'vim', {'ensure': 'installed'}),
@@ -43,7 +47,8 @@ class VimDefinition(BaseDefinition):
                 'contents': self.config,
                 'interpolate': self.interpolate,
                 'permission-mask': '644',
-                'owner': user
+                'owner': user,
+                'after': after
             })
         ]
         if not self.is_global:

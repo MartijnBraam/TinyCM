@@ -5,12 +5,12 @@ from socket import getfqdn
 import urllib.parse
 import os
 import logging
+import argparse
 
 from tinycm.reporting import verify, get_verify_report
 
-if __name__ == '__main__':
-    import argparse
 
+def main():
     parser = argparse.ArgumentParser(description="Tiny Configuration Manager")
     parser.add_argument('--apply', action='store_true', help="Apply configuration instead of verify")
     parser.add_argument('--hostname', help="Override hostname", default=getfqdn())
@@ -54,3 +54,7 @@ if __name__ == '__main__':
     else:
         result = verify(tasks)
         print(get_verify_report(result))
+
+
+if __name__ == '__main__':
+    main()
