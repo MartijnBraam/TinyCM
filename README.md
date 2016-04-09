@@ -2,6 +2,8 @@
 
 This is a very small configuration management tool for when you need Puppet but for a way smaller deployment.
 
+Full docs are available at https://pythonhosted.org/tinycm/
+
 ## Configuration format
 
 This tool doesn't use a special DSL for defining your configuration. Just plain old YAML. Configuration manifests are saved
