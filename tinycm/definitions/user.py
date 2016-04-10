@@ -58,7 +58,7 @@ class UserDefinition(BaseDefinition):
 
         if self.password_hash and other.password_hash and self.password_hash != other.password_hash:
             raise DefinitionConflictError(
-                    'Duplicate definition for {} with different password-hash'.format(self.identifier))
+                'Duplicate definition for {} with different password-hash'.format(self.identifier))
 
         # Merge non-conflicting parameters
         if not self.comment and other.comment:
@@ -205,5 +205,17 @@ class UserDefinition(BaseDefinition):
                 subprocess.check_call(command)
 
             if should_exist and exists:
-                # TODO: Implement updating user
-                pass
+                existing_groups = self._get_existing_groups()
+                wanted_groups = set(self.extra_groups)
+
+                for group in wanted_groups - existing_groups:
+                    command = ['usermod', '-A', '-g', group, self.name]
+                    subprocess.check_call(command)
+
+                for group in existing_groups - wanted_groups:
+                    command = ['deluser', self.name, group]
+                    subprocess.check_call(command)
+
+
+    def _get_existing_groups(self):
+        return set([g.gr_name for g in grp.getgrall() if self.name in g.gr_mem])
