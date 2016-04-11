@@ -10,6 +10,7 @@ import colorama
 
 from tinycm.state import get_state_diff
 from tinycm.utils import http_dirname
+import tinycm.backup
 
 
 def main():
@@ -56,6 +57,11 @@ def main():
     except InvalidParameterError as e:
         logger.error(str(e))
         exit(1)
+
+    config_id = configuration.get_unique_id()
+    logger.info('Unique ID for this configuration: {}'.format(config_id))
+    tinycm.backup.current_id = config_id
+
     logger.debug('Starting sort stage')
     tasks = graph.get_sorted_jobs()
 

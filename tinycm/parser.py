@@ -6,6 +6,7 @@ import re
 import importlib
 import logging
 import boolexp
+import hashlib
 
 from tinycm import UndefinedTypeError
 from tinycm.plugin import install_plugin
@@ -50,6 +51,13 @@ class CMParser(object):
             self.constants = arguments
 
         self._parse()
+
+    def get_unique_id(self):
+        m = hashlib.sha1()
+        for identifier in self.definitions:
+            definition = self.definitions[identifier]
+            m.update(definition.get_unique_data().encode('utf-8'))
+        return m.hexdigest()
 
     def _parse(self):
         self.raw = ruamel.yaml.safe_load_all(open(self.filename))
@@ -124,7 +132,7 @@ class CMParser(object):
             for identifier in import_parsed.definitions:
                 if identifier in self.definitions:
                     self.definitions[identifier] = self.definitions[identifier].try_merge(
-                            import_parsed.definitions[identifier])
+                        import_parsed.definitions[identifier])
                 else:
                     self.definitions[identifier] = import_parsed.definitions[identifier]
             return

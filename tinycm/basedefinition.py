@@ -1,4 +1,5 @@
 from tinycm import DefinitionConflictError
+import json
 
 
 class BaseDefinition(object):
@@ -26,6 +27,9 @@ class BaseDefinition(object):
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
+
+    def get_unique_data(self):
+        return self.identifier + json.dumps(self.parameters)
 
     def merge_if_same(self, key, other, none_value=None):
         self_val = getattr(self, key)

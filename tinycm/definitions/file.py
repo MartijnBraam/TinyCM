@@ -1,5 +1,6 @@
 from tinycm import DefinitionConflictError, InvalidParameterError
 from tinycm.basedefinition import BaseDefinition
+from tinycm.backup import backup_file
 import os
 import grp
 import pwd
@@ -106,6 +107,7 @@ class FileDefinition(BaseDefinition):
 
         if 'contents' in diff:
             self._ensure_contents()
+            backup_file(self.name)
             with open(self.name, 'w') as target_file:
                 target_file.write(self.contents)
 

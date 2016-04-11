@@ -1,8 +1,6 @@
-from tinycm import DefinitionConflictError, InvalidParameterError, ExecutionResult
 from tinycm.basedefinition import BaseDefinition
 import subprocess
 import distro
-from tinycm.reporting import VerifyResult
 import logging
 
 logger = None

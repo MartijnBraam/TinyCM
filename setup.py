@@ -43,7 +43,7 @@ class DiscoverTest(Command):
 
 setup(
         name='tinycm',
-        version='0.1.11',
+        version='0.1.12',
         packages=['tinycm', 'tinycm.definitions'],
         url='https://github.com/MartijnBraam/TinyCM',
         license='MIT',
@@ -71,7 +71,8 @@ setup(
             'tabulate',
             'boolexp',
             'pyparsing',
-            'colorlog'
+            'colorlog',
+            'colorama'
         ],
         cmdclass={'test': DiscoverTest},
 )
