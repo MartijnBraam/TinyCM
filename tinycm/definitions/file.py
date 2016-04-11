@@ -1,51 +1,37 @@
-from tinycm import DefinitionConflictError, InvalidParameterError, ExecutionResult
+from tinycm import DefinitionConflictError, InvalidParameterError
 from tinycm.basedefinition import BaseDefinition
-from tinycm.reporting import VerifyResult
 import os
 import grp
 import pwd
 import stat
 import requests
-import difflib
 
 
 class FileDefinition(BaseDefinition):
-    def __init__(self, identifier, parameters, source, after, context):
-        self.source = source
-        self.after = after
-        self.identifier = identifier
-        self.type = parameters['type']
-        self.path = parameters['name']
-        self.contents = parameters['contents']
-        self.context = context
+    def init(self, type, contents, interpolate=False, encoding='utf-8', ensure='contents', permission_mask=None,
+             owner=None, group=None):
+        self.type = type
+        self.contents = contents
+        self.interpolate = interpolate
+        self.encoding = encoding
+        self.ensure = ensure
+        self.permission_mask = permission_mask
+        self.owner = owner
+        self.group = group
 
-        # Optional parameters
-        self.interpolate = parameters['interpolate'] if 'interpolate' in parameters else False
-        self.encoding = parameters['encoding'] if 'encoding' in parameters else 'utf-8'
-        self.ensure = parameters['ensure'] if 'ensure' in parameters else 'contents'
-        self.permission_mask = parameters['permission-mask'] if 'permission-mask' in parameters else None
-        self.owner = parameters['owner'] if 'owner' in parameters else None
-        self.group = parameters['group'] if 'group' in parameters else None
+        if self.type not in ['constant', 'http']:
+            raise InvalidParameterError('Type not in [constant, http]')
+        if self.ensure not in ['deleted', 'exists', 'contents']:
+            raise InvalidParameterError('Ensure not in [deleted, exists, contents]')
 
-        # Internal parameters
         self._fetched_and_interpolated = False
 
-        super().__init__(identifier)
-
     def try_merge(self, other):
-        if self.type != other.type:
-            raise DefinitionConflictError('Duplicate definition for {} with different type'.format(self.identifier))
-        if self.contents != other.contents:
-            raise DefinitionConflictError('Duplicate definition for {} with different contents'.format(self.identifier))
-
-        if self.encoding and self.encoding != other.encoding:
-            raise DefinitionConflictError('Duplicate definition for {} with different encoding'.format(self.identifier))
-
-        if self.owner and self.owner != other.owner:
-            raise DefinitionConflictError('Duplicate definition for {} with different owner'.format(self.identifier))
-
-        if self.group and self.group != other.group:
-            raise DefinitionConflictError('Duplicate definition for {} with different group'.format(self.identifier))
+        self.type = self.merge_if_same('type', other)
+        self.contents = self.merge_if_same('contents', other)
+        self.encoding = self.merge_if_same('encoding', other, 'utf-8')
+        self.owner = self.merge_if_same('owner', other)
+        self.group = self.merge_if_same('group', other)
 
         if self.permission_mask and other.permission_mask:
             perm_user, perm_group, perm_other = self.permission_mask.split()
@@ -71,6 +57,61 @@ class FileDefinition(BaseDefinition):
 
         return self
 
+    def get_system_state(self):
+        result = {
+            'exists': os.path.isfile(self.name)
+        }
+        if result['exists']:
+            if self.ensure == 'contents':
+                with open(self.name) as input_file:
+                    result['contents'] = input_file.read()
+
+            file_info = os.stat(self.name)
+            file_uid = file_info[stat.ST_UID]
+            file_gid = file_info[stat.ST_GID]
+
+            result['owner'] = file_uid
+            result['group'] = file_gid
+            result['permission-mask'] = str(oct(file_info[stat.ST_MODE]))[-3:]
+
+        return result
+
+    def get_config_state(self):
+        self._ensure_contents()
+        result = {
+            'exists': os.path.isfile(self.name)
+        }
+        if result['exists']:
+            if self.ensure == 'contents':
+                result['contents'] = self.contents
+            if self.owner:
+                result['owner'] = self.owner
+            if self.group:
+                result['group'] = self.group
+            if self.permission_mask:
+                result['permission-mask'] = self.permission_mask
+        return result
+
+    def update_state(self, state_diff):
+        diff = state_diff.changed_keys()
+        exists = os.path.isfile(self.name)
+
+        if 'exists' in diff:
+            if self.ensure == 'removed':
+                os.remove(self.name)
+            elif self.ensure == 'exists' and not exists or self.ensure == 'contents':
+                self._ensure_contents()
+                with open(self.name, 'w') as target_file:
+                    target_file.write(self.contents)
+
+        if 'contents' in diff:
+            self._ensure_contents()
+            with open(self.name, 'w') as target_file:
+                target_file.write(self.contents)
+
+        if 'owner' in diff or 'group' in diff or 'permission-mask' in diff:
+            self._execute_permissions()
+
     def _ensure_contents(self):
         if self._fetched_and_interpolated:
             return
@@ -84,103 +125,6 @@ class FileDefinition(BaseDefinition):
             self.contents = self.contents.format(**self.context)
 
         self._fetched_and_interpolated = True
-
-    def lint(self):
-        if self.type not in ['constant', 'http']:
-            raise InvalidParameterError('Type not in [constant, http]')
-        if self.ensure not in ['deleted', 'exists', 'contents']:
-            raise InvalidParameterError('Ensure not in [deleted, exists, contents]')
-
-    def verify(self):
-        should_exist = self.ensure == 'contents' or self.ensure == 'exists'
-        should_match = self.ensure == 'contents'
-        exists = os.path.isfile(self.path)
-
-        if not should_exist:
-            if exists:
-                return VerifyResult(self.identifier, success=False, message="File {} shouldn't exist".format(self.path))
-            else:
-                return VerifyResult(self.identifier, success=True)
-
-        self._ensure_contents()
-
-        if not exists:
-            return VerifyResult(self.identifier, success=False, message="File {} does not exist".format(self.path))
-
-        if should_match:
-            with open(self.path) as input_file:
-                contents = input_file.read()
-            if contents != self.contents:
-                return VerifyResult(self.identifier, success=False,
-                                    message="File contents incorrect for {}".format(self.path))
-
-        file_info = os.stat(self.path)
-        file_uid = file_info[stat.ST_UID]
-        file_gid = file_info[stat.ST_GID]
-        file_mask = str(oct(file_info[stat.ST_MODE]))[-3:]
-        if self.permission_mask:
-            merged = self._merge_permission_mask(file_mask, str(self.permission_mask))
-            if merged != file_mask:
-                return VerifyResult(self.identifier, success=False,
-                                    message="Incorrect mode for file {}".format(self.path))
-
-        if self.owner:
-            if isinstance(self.owner, int):
-                if self.owner != file_uid:
-                    return VerifyResult(self.identifier, success=False,
-                                        message="Incorrect UID for file {}".format(self.path))
-            else:
-                file_owner = pwd.getpwuid(file_uid).pw_name
-                if self.owner != file_owner:
-                    return VerifyResult(self.identifier, success=False,
-                                        message="Incorrect owner for file {}".format(self.path))
-
-        if self.group:
-            if isinstance(self.group, int):
-                if self.group != file_gid:
-                    return VerifyResult(self.identifier, success=False,
-                                        message="Incorrect GID for file {}".format(self.path))
-            else:
-                file_group = grp.getgrgid(file_gid).gr_name
-                if self.group != file_group:
-                    return VerifyResult(self.identifier, success=False,
-                                        message="Incorrect group for file {}".format(self.path))
-
-        return VerifyResult(self.identifier, success=True)
-
-    def execute(self):
-        should_exist = self.ensure == 'contents' or self.ensure == 'exists'
-        exists = os.path.isfile(self.path)
-
-        if not should_exist:
-            if exists:
-                os.remove(self.path)
-                return ExecutionResult("Removed {}".format(self.path))
-            else:
-                return
-
-        # Store original file for diff later
-        if exists:
-            with open(self.path, 'r') as input_file:
-                old_file = input_file.readlines()
-
-        self._ensure_contents()
-        verify_result = self.verify()
-
-        if not verify_result.success:
-            with open(self.path, 'w') as target_file:
-                target_file.write(self.contents)
-
-        if exists:
-            new_lines = self.contents.splitlines(True)
-            diff = difflib.unified_diff(old_file, new_lines,
-                                        fromfile="old {}".format(self.path),
-                                        tofile="new ".format(self.path))
-            self._execute_permissions()
-            return ExecutionResult(message="Updated file {}".format(self.path), diff=diff)
-        else:
-            self._execute_permissions()
-            return ExecutionResult(message="Created file {}".format(self.path), diff=self.contents.split("\n"))
 
     def _execute_permissions(self):
         mask, uid, gid = self._get_file_perms()
@@ -200,8 +144,8 @@ class FileDefinition(BaseDefinition):
         if self.permission_mask:
             mask = self._merge_permission_mask(mask, self.permission_mask)
 
-        os.chown(self.path, uid, gid)
-        os.chmod(self.path, self._oct_to_dec(int(mask)))
+        os.chown(self.name, uid, gid)
+        os.chmod(self.name, self._oct_to_dec(int(mask)))
 
     def _merge_permission_mask(self, mask1, mask2):
         mask1 = list(mask1)

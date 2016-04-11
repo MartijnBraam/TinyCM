@@ -1,5 +1,4 @@
 from tinycm import InvalidParameterError, UndefinedTypeError
-from tinycm.executer import execute
 from tinycm.log import setup_logger
 from tinycm.parser import CMParser
 from tinycm.graph import CMGraph
@@ -7,8 +6,9 @@ from socket import getfqdn
 import os
 import logging
 import argparse
+import colorama
 
-from tinycm.reporting import verify, get_verify_report
+from tinycm.state import get_state_diff
 from tinycm.utils import http_dirname
 
 
@@ -21,6 +21,8 @@ def main():
     parser.add_argument('--debug', action='store_true', help="Show very verbose messages")
     parser.add_argument('configuration', help=".cm.yml file to verify or apply")
     args = parser.parse_args()
+
+    colorama.init()
 
     level = logging.WARNING
     if args.verbose:
@@ -48,9 +50,6 @@ def main():
         logger.error("Undefined type {0}. You might need to install tinycm_{0}".format(e.missing_type))
         exit(1)
 
-    logger.debug('Starting lint stage')
-    for definition in configuration.definitions:
-        configuration.definitions[definition].lint()
     logger.debug('Starting graph stage')
     try:
         graph = CMGraph(configuration)
@@ -60,11 +59,24 @@ def main():
     logger.debug('Starting sort stage')
     tasks = graph.get_sorted_jobs()
 
+    state_diffs = get_state_diff(tasks)
     if args.apply:
-        result = execute(tasks)
+        for state_diff in state_diffs:
+            if not state_diff.correct:
+                print("Applying {}".format(state_diff.identifier))
+                state_diff.task.update_state(state_diff)
     else:
-        result = verify(tasks)
-        print(get_verify_report(result))
+        changelog = []
+        for state_diff in state_diffs:
+            if not state_diff.correct:
+                changelog.append(state_diff)
+                print(state_diff.identifier)
+                state_diff.print_diff(indent=4)
+
+        print()
+        print("Definitions that don't match the current system state:")
+        for change in changelog:
+            print("- {}: {}".format(change.identifier, ', '.join(change.changed_keys())))
 
 
 if __name__ == '__main__':
