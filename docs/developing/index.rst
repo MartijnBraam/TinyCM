@@ -11,53 +11,91 @@ The Definition class should subclass ``tinycm.basedefinition.BaseDefinition``. A
 .. code-block:: python
 
     from tinycm.basedefinition import BaseDefinition
-    from tinycm import Dependency, ExecutionResult
-    from tinycm.reporting import VerifyResult
 
     class ExampleDefinition(BaseDefinition)
-        def __init__(self, identifier, parameters, source, after, context):
-                # Run the BaseDefinition init so the graph library works
-                super().__init__(identifier)
+        def init(self, ensure, foo, bar=None):
+            """
+            This is where you receive the parameters passed to the definition.
+            You can create optional and required parameters. This is also
+            where you should check if the combination of paramaters is valid.
 
-                # The usual fields
-                self.identifier = identifier
-                self.source = source
-                self.after = after
-                self.context = context
-                self.name = parameters['name']
+            The `name` parameter is handled by the __init__ of BaseDefinition
+            and is saved to `self.name`
+            """
+            self.ensure = ensure
+            self.foo = foo
+            self.bar = bar
 
         def try_merge(self, other):
             """
             This method is called when a duplicate definition exists.
             Return a merged definition or raise DefinitionConflictError
+
+            The BaseDefinition has a helper function `merge_if_same` that
+            will merge the parameter is the same value or if one of the
+            definitions has the parameter undefined.
             """
+            self.foo = self.merge_if_same('foo', other)
             return self
 
-        def lint(self):
+        def get_config_state(self):
             """
-            This method is called after all definitions have been parsed. This is the
-            point where you can raise an InvalidParameterError because the manifest
-            contains invalid parameters
-            """
-            pass
+            Get a dict containing the state defined in this definition. This
+            excludes any parameters that are only required for state change.
 
-        def verify(self):
-            """
-            This method is where you check if the current state of the linux installation matches
-            The parameters defined in this definition.
+            For example the 'manage-home' parameter for used isn't listed
+            here.
 
-            This method must always return a VerifyResult
+            Parameters that are not defined by the user shouldn't be
+            returned here
             """
-            return VerifyResult(self.identifier, success=True)
+            result = {
+                'exists': self.ensure == 'exists',
+                'foo': self.foo
+            }
+            if self.bar:
+                result['bar'] = self.bar
+            return result
 
-        def execute(self):
+        def get_system_state(self):
             """
-            This method is called if --apply is passed to TinyCM.
-            Here you manipulate the state of the Linux machine so it matches the definition
-            and it should be the only place that actually changes anything on the machine.
-            You should probably call self.verify() here to check if anything needs to be done.
+            Get a dict containing the current system state with the same
+            rules as `get_config_state()`.
+
+            This method should return all posible parameters, not just
+            the ones defined by the user.
             """
-            return ExecutionResult("Changed something on the server")
+            exists = does_it_exist_already()
+            if it_exists_already()
+                return {
+                    'exists': True,
+                    'foo': get_the_current_system_foo(),
+                    'bar': get_the_current_system_bar()
+                }
+            else:
+                return {
+                    'exists': False
+                }
+
+        def update_state(self, state_diff):
+            """
+            This is where the actual system state is updated. The
+            `state_diff` object contains the changes between the
+            current system state and the user defined state.
+            """
+            diff = state_diff.changed_keys()
+
+            if 'exists' in diff:
+                if self.ensure == 'exists':
+                    create_the_thing()
+                else:
+                    remove_the_thing()
+
+            else:
+                if 'foo' in diff:
+                    change_the_system_foo()
+                if 'bar' in diff:
+                    change_the_system_bar()
 
         def dependencies(self):
             """
