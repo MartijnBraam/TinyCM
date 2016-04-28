@@ -29,8 +29,20 @@ class StateDiff(object):
         self.identifier = task.identifier
 
     def changed_keys(self):
-        config = set(self.config.items())
-        system = set(self.system.items())
+        config = []
+        system = []
+        for item in self.config.items():
+            if isinstance(item, list):
+                config.append(tuple(item))
+            else:
+                config.append(item)
+        for item in self.system.items():
+            if isinstance(item, list):
+                system.append(tuple(item))
+            else:
+                system.append(item)
+        config = set(config)
+        system = set(system)
 
         key_value_diff = config ^ system
         changed = []
