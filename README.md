@@ -35,10 +35,14 @@ host:
 global:
   nameserver1: 8.8.8.8
   nameserver2: 8.8.4.4
+plugins:
+  - vim
 ---
-import:
-  name: zsh
-  distro: prezto
+# Install vim and create a sane basic config in /etc/vim/vimrc.local
+vim:
+  name: global
+  is-global: true
+  ensure: exists
 ---
 package:
   name:
