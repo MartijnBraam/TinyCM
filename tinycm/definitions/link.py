@@ -42,12 +42,13 @@ class LinkDefinition(BaseDefinition):
         }
 
     def update_state(self, state_diff):
-        if 'ensure' in state_diff:
+        diff = state_diff.changed_keys()
+        if 'ensure' in diff:
             if self.ensure == 'removed':
                 os.remove(self.name)
             else:
                 os.symlink(self.target, self.name)
 
-        if 'target' in state_diff:
+        if 'target' in diff:
             os.remove(self.name)
             os.symlink(self.target, self.name)

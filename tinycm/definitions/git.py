@@ -45,13 +45,14 @@ class GitDefinition(BaseDefinition):
         }
 
     def update_state(self, state_diff):
-        if 'cloned' in state_diff:
+        diff = state_diff.changed_keys()
+        if 'cloned' in diff:
             if self.ensure == 'removed':
                 shutil.rmtree(self.name)
             else:
                 self._git_clone()
 
-        if 'ensure' in state_diff:
+        if 'ensure' in diff:
             self._git_checkout()
 
     def _git_command(self, command):
