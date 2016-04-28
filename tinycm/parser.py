@@ -158,6 +158,7 @@ class CMParser(object):
                 after = parameters['after']
             else:
                 after = [parameters['after']]
+            del parameters['after']
 
         logger.debug('Creating instance of {}'.format(class_name))
         instance = class_(identifier, parameters, self.source, after, self.constants)

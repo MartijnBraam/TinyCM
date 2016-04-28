@@ -10,6 +10,44 @@ file:
     nameserver fd00::c225:6ff:fe7a:1ae6
   type: constant
 ---
-user:
-  name: martijn
-  ensure: exists
+git:
+  name: /home/martijn/.zprezto
+  remote: https://github.com/sorin-ionescu/prezto.git
+  ensure: master
+  recursive: true
+---
+link:
+  name: /home/martijn/.zshrc
+  ensure: symlink
+  target: /home/martijn/.zprezto/runcoms/zshrc
+  after: git::/home/martijn/.zprezto
+---
+link:
+  name: /home/martijn/.zshenv
+  ensure: symlink
+  target: /home/martijn/.zprezto/runcoms/zshenv
+  after: git::/home/martijn/.zprezto
+---
+link:
+  name: /home/martijn/.zprofile
+  ensure: symlink
+  target: /home/martijn/.zprezto/runcoms/zprofile
+  after: git::/home/martijn/.zprezto
+---
+link:
+  name: /home/martijn/.zpreztorc
+  ensure: symlink
+  target: /home/martijn/.zprezto/runcoms/zpreztorc
+  after: git::/home/martijn/.zprezto
+---
+link:
+  name: /home/martijn/.zlogin
+  ensure: symlink
+  target: /home/martijn/.zprezto/runcoms/zlogin
+  after: git::/home/martijn/.zprezto
+---
+link:
+  name: /home/martijn/.zlogout
+  ensure: symlink
+  target: /home/martijn/.zprezto/runcoms/zlogout
+  after: git::/home/martijn/.zprezto
