@@ -107,6 +107,7 @@ class FileDefinition(BaseDefinition):
 
         if 'exists' in diff:
             if self.ensure == 'removed':
+                backup_file(self.name)
                 os.remove(self.name)
             elif self.ensure == 'exists' and not exists or self.ensure == 'contents':
                 self._ensure_contents()
