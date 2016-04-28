@@ -122,12 +122,12 @@ class FileDefinition(BaseDefinition):
         if self.type == 'http':
             url = self.contents
             response = requests.get(url)
-            self.contents = response.content().decode(self.encoding)
+            self.contents = response.content.decode(self.encoding)
 
         if self.type == 'template':
             url = get_module_file(self.contents)
             response = requests.get(url)
-            self.contents = response.content().decode(self.encoding)
+            self.contents = response.content.decode(self.encoding)
 
         if self.interpolate:
             self.contents = self.contents.format(**self.context)
