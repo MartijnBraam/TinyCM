@@ -24,7 +24,8 @@ class StateDiff(object):
                                          fromfile="Current state",
                                          tofile="Wanted state ")
 
-        self.correct = self.config_text == self.system_text
+        changed = self.changed_keys()
+        self.correct = len(changed) == 0
         self.task = task
         self.identifier = task.identifier
 
