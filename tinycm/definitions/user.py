@@ -70,7 +70,7 @@ class UserDefinition(BaseDefinition):
         if self.homedir:
             result['homedir'] = self.homedir
         if self.extra_groups:
-            result['groups'] = self.extra_groups
+            result['groups'] = list(sorted(self.extra_groups))
 
         return result
 
@@ -86,7 +86,7 @@ class UserDefinition(BaseDefinition):
                 'homedir': homedir,
                 'shell': shell,
                 'password': spwd.getspnam(self.name)[1],
-                'groups': self._get_existing_groups()
+                'groups': list(sorted(self._get_existing_groups()))
             }
 
         except KeyError:
