@@ -1,10 +1,13 @@
 import ruamel.yaml
 import difflib
 from colorama import Fore, Style
+import logging
 
 
 def get_state_diff(tasks):
+    logger = logging.getLogger('tinycm')
     for task in tasks:
+        logger.debug('Making state diff for {}'.format(task.identifier))
         config_state = task.get_config_state()
         system_state = task.get_system_state()
         yield StateDiff(task, config_state, system_state)
@@ -14,6 +17,7 @@ class StateDiff(object):
     def __init__(self, task, config, system):
         self.config = config
         self.system = system
+        self.logger = logging.getLogger('tinycm')
 
         self.config_text = ruamel.yaml.safe_dump(config, default_flow_style=False)
         self.system_text = ruamel.yaml.safe_dump(system, default_flow_style=False)
@@ -26,6 +30,8 @@ class StateDiff(object):
 
         changed = self.changed_keys()
         self.correct = len(changed) == 0
+        if not self.correct:
+            self.logger.debug('State for {} is incorrect'.format(task.identifier))
         self.task = task
         self.identifier = task.identifier
 
@@ -60,7 +66,7 @@ class StateDiff(object):
             if line.startswith('+'):
                 print(indent + Fore.GREEN + line + Style.RESET_ALL, end='')
             elif line.startswith('-'):
-                print(indent+ Fore.RED + line + Style.RESET_ALL, end='')
+                print(indent + Fore.RED + line + Style.RESET_ALL, end='')
             else:
                 print(indent + line, end='')
 
