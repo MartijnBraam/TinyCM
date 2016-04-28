@@ -67,11 +67,13 @@ def main():
 
     state_diffs = get_state_diff(tasks)
     if args.apply:
+        logger.debug('Starting apply stage')
         for state_diff in state_diffs:
             if not state_diff.correct:
                 print("Applying {}".format(state_diff.identifier))
                 state_diff.task.update_state(state_diff)
     else:
+        logger.debug('Starting report stage')
         changelog = []
         for state_diff in state_diffs:
             if not state_diff.correct:
@@ -79,10 +81,13 @@ def main():
                 print(state_diff.identifier)
                 state_diff.print_diff(indent=4)
 
-        print()
-        print("Definitions that don't match the current system state:")
-        for change in changelog:
-            print("- {}: {}".format(change.identifier, ', '.join(change.changed_keys())))
+        if len(changelog) == 0:
+            logging.info('System state is correct, no changes required')
+        else:
+            print()
+            print("Definitions that don't match the current system state:")
+            for change in changelog:
+                print("- {}: {}".format(change.identifier, ', '.join(change.changed_keys())))
 
 
 if __name__ == '__main__':
