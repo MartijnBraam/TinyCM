@@ -36,11 +36,19 @@ class PackageDefinition(BaseDefinition):
         else:
             self._pm_remove()
 
-    def _pm_check(self):
+    def _pm_autodetect(self):
         if self.packagemanager == 'autodetect':
-            current_distro = distro.identify()
-            command_template = current_distro.command['package']['is-installed']
-        elif self.packagemanager == 'apt':
+            current_distro = distro.like()
+            if current_distro == '':
+                current_distro = distro.id()
+            if current_distro in ['debian', 'ubuntu']:
+                self.packagemanager = 'apt'
+            elif current_distro == 'arch':
+                self.packagemanager = 'pacman'
+
+    def _pm_check(self):
+        self._pm_autodetect()
+        if self.packagemanager == 'apt':
             command_template = 'dpkg -s {}'
         elif self.packagemanager == 'pacman':
             command_template = 'pacman -Q {}'
@@ -54,10 +62,8 @@ class PackageDefinition(BaseDefinition):
             return False
 
     def _pm_install(self):
-        if self.packagemanager == 'autodetect':
-            current_distro = distro.identify()
-            command_template = current_distro.command['package']['install']
-        elif self.packagemanager == 'apt':
+        self._pm_autodetect()
+        if self.packagemanager == 'apt':
             command_template = 'apt-get -y install --no-install-recommends {}'
         elif self.packagemanager == 'pacman':
             command_template = 'pacman -S --noconfirm {}'
@@ -68,10 +74,8 @@ class PackageDefinition(BaseDefinition):
         subprocess.check_call(command, shell=True, stderr=subprocess.STDOUT)
 
     def _pm_remove(self):
-        if self.packagemanager == 'autodetect':
-            current_distro = distro.identify()
-            command_template = current_distro.command['package']['purge']
-        elif self.packagemanager == 'apt':
+        self._pm_autodetect()
+        if self.packagemanager == 'apt':
             command_template = 'apt-get -y remove {}'
         elif self.packagemanager == 'pacman':
             command_template = 'pacman -Rs --noconfirm {}'
