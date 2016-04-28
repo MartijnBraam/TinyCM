@@ -1,6 +1,13 @@
 global:
   nameserver1: 1.2.3.4
 ---
+user:
+  name: martijn
+  ensure: exists
+  groups:
+    - test1
+    - test2
+---
 file:
   name: /etc/resolv.conf
   contents: |

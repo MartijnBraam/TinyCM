@@ -32,13 +32,13 @@ class StateDiff(object):
         config = []
         system = []
         for item in self.config.items():
-            if isinstance(item, list):
-                config.append(tuple(item))
+            if isinstance(item[1], list):
+                config.append((item[0], tuple(item[1])))
             else:
                 config.append(item)
         for item in self.system.items():
-            if isinstance(item, list):
-                system.append(tuple(item))
+            if isinstance(item[1], list):
+                system.append((item[0], tuple(item[1])))
             else:
                 system.append(item)
         config = set(config)
