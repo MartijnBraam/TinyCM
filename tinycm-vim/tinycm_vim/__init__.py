@@ -9,6 +9,7 @@ class VimDefinition(BaseDefinition):
     def init(self, is_global=False, ensure='exists', config=None, type='constant', interpolate=False):
         self.is_global = is_global
         self.ensure = ensure
+        self.using_default_config = config is None
         self.config = config if config else self._get_default_config()
         self.type = type
         self.interpolate = interpolate
@@ -30,10 +31,14 @@ class VimDefinition(BaseDefinition):
 
         after.append('package::vim')
 
+        config_ensure = 'contents'
+        if self.using_default_config:
+            config_ensure = 'exists'
+
         dependencies = [
             Dependency('package', 'vim', {'ensure': 'installed'}),
             Dependency('file', self._get_config_path(), {
-                'ensure': 'exists',
+                'ensure': config_ensure,
                 'type': self.type,
                 'contents': self.config,
                 'interpolate': self.interpolate,

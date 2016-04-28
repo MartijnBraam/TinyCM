@@ -89,17 +89,16 @@ class FileDefinition(BaseDefinition):
     def get_config_state(self):
         self._ensure_contents()
         result = {
-            'exists': os.path.isfile(self.name)
+            'exists': self.ensure in ['exists', 'contents']
         }
-        if result['exists']:
-            if self.ensure == 'contents':
-                result['contents'] = self.contents
-            if self.owner:
-                result['owner'] = self.owner
-            if self.group:
-                result['group'] = self.group
-            if self.permission_mask:
-                result['permission-mask'] = self.permission_mask
+        if self.ensure == 'contents':
+            result['contents'] = self.contents
+        if self.owner:
+            result['owner'] = self.owner
+        if self.group:
+            result['group'] = self.group
+        if self.permission_mask:
+            result['permission-mask'] = self.permission_mask
         return result
 
     def update_state(self, state_diff):
