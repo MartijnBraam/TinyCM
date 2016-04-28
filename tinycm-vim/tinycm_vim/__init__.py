@@ -1,29 +1,20 @@
-from tinycm import Dependency, ExecutionResult
+from tinycm import Dependency, InvalidParameterError
 from tinycm.basedefinition import BaseDefinition
-from tinycm.reporting import VerifyResult
 
 import pwd
 import os
 
 
 class VimDefinition(BaseDefinition):
-    def __init__(self, identifier, parameters, source, after, context):
-        # Run the BaseDefinition init so the graph library works
-        super().__init__(identifier)
+    def init(self, is_global=False, ensure='exists', config=None, type='constant', interpolate=False):
+        self.is_global = is_global
+        self.ensure = ensure
+        self.config = config if config else self._get_default_config()
+        self.type = type
+        self.interpolate = interpolate
 
-        # The usual fields
-        self.identifier = identifier
-        self.source = source
-        self.after = after
-        self.context = context
-        self.name = parameters['name']
-
-        # Optional fields
-        self.is_global = parameters['is-global'] if 'is-global' in parameters else False
-        self.ensure = parameters['ensure'] if 'ensure' in parameters else 'exists'
-        self.config = parameters['config'] if 'config' in parameters else self._get_default_config()
-        self.type = parameters['type'] if 'type' in parameters else 'constant'
-        self.interpolate = parameters['interpolate'] if 'interpolate' in parameters else False
+        if type not in ['constant', 'http']:
+            raise InvalidParameterError('Type not in [constant, http]')
 
         # Add dependencies
         self.after.append('file::{}'.format(self._get_config_path()))
@@ -55,17 +46,21 @@ class VimDefinition(BaseDefinition):
             Dependency('user', self.name, {'ensure': 'exists'})
         return dependencies
 
-    def try_merge(self):
+    def try_merge(self, other):
+        self.ensure = self.merge_if_same('ensure', other)
+        self.is_global = self.merge_if_same('is_global', other, False)
+        self.type = self.merge_if_same('type', other)
+        self.interpolate = self.merge_if_same('interpolate', other, False)
+        return self
+
+    def get_config_state(self):
+        return {}
+
+    def get_system_state(self):
+        return {}
+
+    def update_state(self):
         pass
-
-    def lint(self):
-        pass
-
-    def verify(self):
-        return VerifyResult(self.identifier, success=True)
-
-    def execute(self):
-        return ExecutionResult('Vim installed')
 
     def _get_config_path(self):
         if self.is_global:

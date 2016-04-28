@@ -91,10 +91,12 @@ class CMParser(object):
             self._load_definition(definition)
 
     def _check_plugin(self, plugin):
+        logger.debug('Checking if plugin is installed: {}'.format(plugin))
         try:
             importlib.import_module("tinycm_{}".format(plugin))
             exists = True
         except ImportError:
+            logger.debug('Module tinycm_{} does not exist'.format(plugin))
             exists = False
 
         if not exists:
@@ -145,6 +147,7 @@ class CMParser(object):
         except ImportError:
             try:
                 module_name = 'tinycm_{}'.format(type)
+                logger.debug('Checking for module existence: {}'.format(module_name))
                 module = importlib.import_module(module_name)
             except ImportError:
                 raise UndefinedTypeError(type, "Type not found: {}".format(type))

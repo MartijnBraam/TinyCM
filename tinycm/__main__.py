@@ -82,7 +82,7 @@ def main():
                 state_diff.print_diff(indent=4)
 
         if len(changelog) == 0:
-            logging.info('System state is correct, no changes required')
+            logger.info('System state is correct, no changes required')
         else:
             print()
             print("Definitions that don't match the current system state:")
