@@ -13,8 +13,8 @@ class VimDefinition(BaseDefinition):
         self.type = type
         self.interpolate = interpolate
 
-        if type not in ['constant', 'http']:
-            raise InvalidParameterError('Type not in [constant, http]')
+        if type not in ['constant', 'http', 'template']:
+            raise InvalidParameterError('Type not in [constant, http, template]')
 
         # Add dependencies
         self.after.append('file::{}'.format(self._get_config_path()))

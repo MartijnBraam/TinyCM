@@ -10,6 +10,7 @@ import colorama
 
 from tinycm.state import get_state_diff
 from tinycm.utils import http_dirname
+import tinycm.utils
 import tinycm.backup
 
 
@@ -38,6 +39,8 @@ def main():
             args.modulepath = http_dirname(args.configuration)
         else:
             args.modulepath = os.path.dirname(args.configuration)
+
+    tinycm.utils.modulepath = args.modulepath
 
     logger.info('Starting TinyCM run')
     logger.info('Configuration: {}'.format(args.configuration))

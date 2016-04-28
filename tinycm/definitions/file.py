@@ -6,6 +6,7 @@ import grp
 import pwd
 import stat
 import requests
+from tinycm.utils import get_module_file
 
 
 class FileDefinition(BaseDefinition):
@@ -20,8 +21,8 @@ class FileDefinition(BaseDefinition):
         self.owner = owner
         self.group = group
 
-        if self.type not in ['constant', 'http']:
-            raise InvalidParameterError('Type not in [constant, http]')
+        if self.type not in ['constant', 'http', 'template']:
+            raise InvalidParameterError('Type not in [constant, http, template]')
         if self.ensure not in ['deleted', 'exists', 'contents']:
             raise InvalidParameterError('Ensure not in [deleted, exists, contents]')
 
@@ -120,6 +121,11 @@ class FileDefinition(BaseDefinition):
 
         if self.type == 'http':
             url = self.contents
+            response = requests.get(url)
+            self.contents = response.content().decode(self.encoding)
+
+        if self.type == 'template':
+            url = get_module_file(self.contents)
             response = requests.get(url)
             self.contents = response.content().decode(self.encoding)
 
