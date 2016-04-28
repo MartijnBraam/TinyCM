@@ -4,6 +4,21 @@ This is a very small configuration management tool for when you need Puppet but 
 
 Full docs are available at https://pythonhosted.org/tinycm/
 
+## Installing
+
+The easy global install with global python packages:
+
+```bash
+$ pip3 install tinycm
+```
+
+In a seperate python environtment
+```bash
+$ virtualenv -p /usr/bin/python3 /usr/local/share/tinycm
+$ /usr/local/share/tinycm/bin/pip3 install tinycm
+$ ln -s /usr/local/share/tinycm/bin/tinycm /usr/local/bin/tinycm
+```
+
 ## Configuration format
 
 This tool doesn't use a special DSL for defining your configuration. Just plain old YAML. Configuration manifests are saved
