@@ -69,11 +69,19 @@ class FileDefinition(BaseDefinition):
                     result['contents'] = input_file.read()
 
             file_info = os.stat(self.name)
+
             file_uid = file_info[stat.ST_UID]
             file_gid = file_info[stat.ST_GID]
 
-            result['owner'] = file_uid
-            result['group'] = file_gid
+            if isinstance(self.owner, int):
+                result['owner'] = file_uid
+            else:
+                result['owner'] = self._uid_to_user(file_uid)
+
+            if isinstance(self.group, int):
+                result['group'] = file_gid
+            else:
+                result['group'] = self._gid_to_group(file_gid)
             result['permission-mask'] = str(oct(file_info[stat.ST_MODE]))[-3:]
 
         return result
@@ -164,7 +172,7 @@ class FileDefinition(BaseDefinition):
         return ''.join(mask1)
 
     def _get_file_perms(self):
-        file_info = os.stat(self.path)
+        file_info = os.stat(self.name)
         file_uid = file_info[stat.ST_UID]
         file_gid = file_info[stat.ST_GID]
         file_mask = str(oct(file_info[stat.ST_MODE]))[-3:]
@@ -172,3 +180,9 @@ class FileDefinition(BaseDefinition):
 
     def _oct_to_dec(self, input_number):
         return sum(int(digit) * (8 ** power) for power, digit in enumerate(str(input_number)[::-1]))
+
+    def _uid_to_user(self, uid):
+        return pwd.getpwuid(uid).pw_name
+
+    def _gid_to_group(self, gid):
+        return grp.getgrgid(gid).gr_name
