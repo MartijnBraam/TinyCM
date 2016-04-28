@@ -25,9 +25,6 @@ class UserDefinition(BaseDefinition):
         if self.password and self.password_hash:
             raise InvalidParameterError('Both password and password-hash defined.')
 
-        if not os.path.isfile(self.shell):
-            raise InvalidParameterError('Shell "{}" does not exist'.format(self.shell))
-
     def try_merge(self, other):
         self.ensure = self.merge_if_same('ensure', other)
         self.comment = self.merge_if_same('comment', other)
