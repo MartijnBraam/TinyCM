@@ -43,7 +43,7 @@ class DiscoverTest(Command):
 
 setup(
         name='tinycm',
-        version='0.1.25',
+        version='0.1.26',
         packages=['tinycm', 'tinycm.definitions'],
         url='https://github.com/MartijnBraam/TinyCM',
         license='MIT',
